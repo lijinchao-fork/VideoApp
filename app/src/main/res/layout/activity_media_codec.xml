@@ -1,0 +1,62 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <com.taro.videoapp.record.widget.CameraSurfaceView
+        android:id="@+id/camera"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+
+    <LinearLayout
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/filter_normal"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:text="普通"
+            android:gravity="center"/>
+
+        <!--<android.support.v7.widget.AppCompatButton-->
+        <!--android:id="@+id/filter_blend"-->
+        <!--android:layout_width="0dp"-->
+        <!--android:layout_weight="1"-->
+        <!--android:layout_height="48dp"-->
+        <!--android:text="@string/filter_blend"-->
+        <!--android:gravity="center"/>-->
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/filter_tone_curve"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:text="调和"
+            android:gravity="center"/>
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/filter_soft_light"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:text="图片调和"
+            android:gravity="center"/>
+
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/record"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:text="start"
+            android:gravity="center"/>
+
+
+    </LinearLayout>
+
+</RelativeLayout>
