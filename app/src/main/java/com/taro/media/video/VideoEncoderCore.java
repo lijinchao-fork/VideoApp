@@ -19,10 +19,14 @@ package com.taro.media.video;
 import android.annotation.TargetApi;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.util.Log;
 import android.view.Surface;
+
+import com.taro.media.audio.AudioRecorder;
+import com.taro.media.audio.RingBuffer;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,14 +49,19 @@ public class VideoEncoderCore {
 
     // TODO: these ought to be configurable as well
     private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
+    private static final String AUDIO_MIME_TYPE = "audio/mpeg";
     private static final int FRAME_RATE = 30;               // 30fps
     private static final int IFRAME_INTERVAL = 5;           // 5 seconds between I-frames
 
+
     private Surface mInputSurface;
     private MediaMuxer mMuxer;
+    private MediaCodec mAudioEncoder;
+
     private MediaCodec mEncoder;
     private MediaCodec.BufferInfo mBufferInfo;
     private int mTrackIndex;
+    private int mAudioTrackIndex;
     private boolean mMuxerStarted;
 
     /**
@@ -79,6 +88,18 @@ public class VideoEncoderCore {
         mEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mInputSurface = mEncoder.createInputSurface();
         mEncoder.start();
+
+//        MediaFormat audioFormat = new MediaFormat();
+//        audioFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 22050);
+//        audioFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
+//        try {
+//            mAudioEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC);
+//            mAudioEncoder.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+//            mAudioEncoder.start();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
 
         // Create a MediaMuxer.  We can't add the video track and start() the muxer here,
         // because our MediaFormat doesn't have the Magic Goodies.  These can only be
@@ -127,7 +148,9 @@ public class VideoEncoderCore {
      * We're just using the muxer to get a .mp4 file (instead of a raw H.264 stream).  We're
      * not recording audio.
      */
-    public void drainEncoder(boolean endOfStream) {
+    public void drainEncoder(boolean endOfStream, long timestampNanos) {
+
+
         final int TIMEOUT_USEC = 10000;
         if (VERBOSE) Log.d(TAG, "drainEncoder(" + endOfStream + ")");
 
@@ -156,9 +179,12 @@ public class VideoEncoderCore {
                 }
                 MediaFormat newFormat = mEncoder.getOutputFormat();
                 Log.d(TAG, "encoder output format changed: " + newFormat);
-
                 // now that we have the Magic Goodies, start the muxer
                 mTrackIndex = mMuxer.addTrack(newFormat);
+
+                MediaFormat audioFormat = mEncoder.getOutputFormat();
+                Log.d(TAG, "encoder output audioFormat changed: " + audioFormat);
+//                mAudioTrackIndex = mMuxer.addTrack(audioFormat);
                 mMuxer.start();
                 mMuxerStarted = true;
             } else if (encoderStatus < 0) {
@@ -206,5 +232,93 @@ public class VideoEncoderCore {
                 }
             }
         }
+
+//        drainAudioEncoder(endOfStream, timestampNanos);
+
     }
+
+    public void drainAudioEncoder(boolean endOfStream, long timestampNanos) {
+        final int TIMEOUT_USEC = 10000;
+        if (VERBOSE) Log.d(TAG, "drainAudioEncoder drainAudioEncoder(" + endOfStream + ")");
+
+        if (endOfStream) {
+            if (VERBOSE) Log.d(TAG, "drainAudioEncoder sending EOS to encoder");
+            mAudioEncoder.signalEndOfInputStream();
+        }
+
+        ByteBuffer[] inputBuffers = mAudioEncoder.getInputBuffers();
+        ByteBuffer[] encoderOutputBuffers = mAudioEncoder.getOutputBuffers();
+        while (true) {
+            int inputBufferIndex = mAudioEncoder.dequeueInputBuffer(TIMEOUT_USEC);
+            if (inputBufferIndex >= 0) {
+                RingBuffer ringBuffer = AudioRecorder.getInstance().getRingBuffer();
+                if(ringBuffer != null){
+                    byte[] bytes = ringBuffer.read();
+                    inputBuffers[inputBufferIndex].put(bytes);
+                    mAudioEncoder.queueInputBuffer(inputBufferIndex, 0, bytes.length, timestampNanos, 0);
+                }
+
+            }
+
+            int encoderStatus = mAudioEncoder.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
+            if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                // no output available yet
+                if (!endOfStream) {
+                    break;      // out of while
+                } else {
+                    if (VERBOSE) Log.d(TAG, "drainAudioEncoder no output available, spinning to await EOS");
+                }
+            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                // not expected for an encoder
+                encoderOutputBuffers = mAudioEncoder.getOutputBuffers();
+            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                MediaFormat newFormat = mAudioEncoder.getOutputFormat();
+                Log.d(TAG, "mAudioEncoder encoder output format changed: " + newFormat);
+
+            } else if (encoderStatus < 0) {
+                Log.w(TAG, "unexpected result from encoder.dequeueOutputBuffer: " + encoderStatus);
+                // let's ignore it
+            } else {
+                ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
+                if (encodedData == null) {
+                    throw new RuntimeException("encoderOutputBuffer " + encoderStatus + " was null");
+                }
+
+                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                    // The codec config data was pulled out and fed to the muxer when we got
+                    // the INFO_OUTPUT_FORMAT_CHANGED status.  Ignore it.
+                    if (VERBOSE) Log.d(TAG, "ignoring BUFFER_FLAG_CODEC_CONFIG");
+                    mBufferInfo.size = 0;
+                }
+
+                if (mBufferInfo.size != 0) {
+                    if (!mMuxerStarted) {
+                        throw new RuntimeException("muxer hasn't started");
+                    }
+
+                    // adjust the ByteBuffer values to match BufferInfo (not needed?)
+                    encodedData.position(mBufferInfo.offset);
+                    encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
+
+                    mMuxer.writeSampleData(mAudioTrackIndex, encodedData, mBufferInfo);
+                    if (VERBOSE) {
+                        Log.d(TAG, "sent " + mBufferInfo.size + " bytes to muxer, ts=" + mBufferInfo.presentationTimeUs);
+                    }
+                }
+
+                mAudioEncoder.releaseOutputBuffer(encoderStatus, false);
+
+                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    if (!endOfStream) {
+                        Log.w(TAG, "reached end of stream unexpectedly");
+                    } else {
+                        if (VERBOSE) Log.d(TAG, "end of stream reached");
+                    }
+                    break;      // out of while
+                }
+            }
+        }
+    }
+
+
 }

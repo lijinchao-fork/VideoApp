@@ -1,6 +1,8 @@
 package com.taro.videoapp.record;
 
 import android.content.Context;
+import android.media.MediaCodec;
+import android.media.MediaFormat;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -8,21 +10,23 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-import com.taro.videoapp.R;
+import com.taro.media.audio.AudioRecorder;
 import com.taro.media.camera.CameraRecordRenderer;
 import com.taro.media.filter.FilterManager;
 import com.taro.media.video.EncoderConfig;
 import com.taro.media.widget.CameraSurfaceView;
+import com.taro.videoapp.R;
 import com.taro.videoapp.shadercamera.util.FileUtil;
 
 import java.io.File;
-
+import java.io.IOException;
 
 public class MediaCodecActivity extends AppCompatActivity implements View.OnClickListener {
 
     private CameraSurfaceView mCameraSurfaceView;
     private Button mRecordButton;
     private boolean mIsRecordEnabled;
+    private AudioRecorder audioRecorder;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +42,23 @@ public class MediaCodecActivity extends AppCompatActivity implements View.OnClic
         mRecordButton.setOnClickListener(this);
 
         updateRecordButton();
+
+//        MediaFormat audioFormat = null;
+//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+//            audioFormat = new MediaFormat();
+//            audioFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
+//            audioFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
+//            MediaCodec mAudioEncoder = null;
+//            try {
+//                mAudioEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC);
+//                mAudioEncoder.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+//                mAudioEncoder.start();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//        }
+
     }
 
     @Override protected void onResume() {
@@ -68,7 +89,12 @@ public class MediaCodecActivity extends AppCompatActivity implements View.OnClic
                 mCameraSurfaceView.changeFilter(FilterManager.FilterType.SoftLight);
                 break;
             case R.id.record:
+                if(audioRecorder == null){
+                    audioRecorder = AudioRecorder.getInstance();
+                }
+
                 if (!mIsRecordEnabled) {
+                    audioRecorder.startRecording();
                     mCameraSurfaceView.queueEvent(new Runnable() {
                         @Override public void run() {
                             CameraRecordRenderer renderer = mCameraSurfaceView.getRenderer();
@@ -78,6 +104,8 @@ public class MediaCodecActivity extends AppCompatActivity implements View.OnClic
                                     1024 * 1024 /* 1 Mb/s */));
                         }
                     });
+                }else{
+                    audioRecorder.stopRecording();
                 }
                 mIsRecordEnabled = !mIsRecordEnabled;
                 mCameraSurfaceView.queueEvent(new Runnable() {
