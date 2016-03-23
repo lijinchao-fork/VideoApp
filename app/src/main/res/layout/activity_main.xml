@@ -39,4 +39,12 @@
         android:layout_height="wrap_content"
         android:text="record media" />
 
+    <TextView
+        android:layout_marginTop="40dp"
+        android:layout_below="@+id/record_media"
+        android:id="@+id/media_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="media image" />
+
 </RelativeLayout>

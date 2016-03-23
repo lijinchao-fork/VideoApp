@@ -3,10 +3,13 @@
     android:layout_height="match_parent">
 
 
-    <com.taro.media.widget.CameraSurfaceView
-        android:id="@+id/camera"
+    <ImageView
+        android:id="@+id/image_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:src="@drawable/topics01"
+        android:scaleType="fitStart"/>
 
 
     <LinearLayout
@@ -23,20 +26,12 @@
             android:text="普通"
             android:gravity="center"/>
 
-        <!--<android.support.v7.widget.AppCompatButton-->
-        <!--android:id="@+id/filter_blend"-->
-        <!--android:layout_width="0dp"-->
-        <!--android:layout_weight="1"-->
-        <!--android:layout_height="48dp"-->
-        <!--android:text="@string/filter_blend"-->
-        <!--android:gravity="center"/>-->
-
         <android.support.v7.widget.AppCompatButton
             android:id="@+id/filter_tone_curve"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="48dp"
-            android:text="调和"
+            android:text="混合"
             android:gravity="center"/>
 
         <android.support.v7.widget.AppCompatButton
@@ -44,16 +39,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="48dp"
-            android:text="图片调和"
-            android:gravity="center"/>
-
-
-        <android.support.v7.widget.AppCompatButton
-            android:id="@+id/record"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="48dp"
-            android:text="start"
+            android:text="图片混合"
             android:gravity="center"/>
 
 

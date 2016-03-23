@@ -26,6 +26,8 @@
 
         <activity android:name=".record.MediaCodecActivity"/>
 
+        <activity android:name=".mediaimage.MediaImageActivity"/>
+
 
     </application>
 

@@ -9,10 +9,10 @@ import android.view.View;
 import android.widget.Button;
 
 import com.taro.videoapp.R;
-import com.taro.videoapp.record.camera.CameraRecordRenderer;
-import com.taro.videoapp.record.filter.FilterManager;
-import com.taro.videoapp.record.video.EncoderConfig;
-import com.taro.videoapp.record.widget.CameraSurfaceView;
+import com.taro.media.camera.CameraRecordRenderer;
+import com.taro.media.filter.FilterManager;
+import com.taro.media.video.EncoderConfig;
+import com.taro.media.widget.CameraSurfaceView;
 import com.taro.videoapp.shadercamera.util.FileUtil;
 
 import java.io.File;

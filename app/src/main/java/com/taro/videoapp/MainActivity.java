@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.taro.videoapp.gpucamera.GPUCameraActivity;
+import com.taro.videoapp.mediaimage.MediaImageActivity;
 import com.taro.videoapp.record.MediaCodecActivity;
 import com.taro.videoapp.shadercamera.ShaderCameraActivity;
 import com.taro.videoapp.shaderimage.ShaderImageActivity;
@@ -22,6 +23,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.share_camera).setOnClickListener(this);
         findViewById(R.id.gpu_camera).setOnClickListener(this);
         findViewById(R.id.record_media).setOnClickListener(this);
+        findViewById(R.id.media_image).setOnClickListener(this);
     }
 
 
@@ -45,6 +47,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if(v.getId() == R.id.record_media){
             Intent intent = new Intent(this, MediaCodecActivity.class);
+            startActivity(intent);
+        }
+
+        if(v.getId() == R.id.media_image){
+            Intent intent = new Intent(this, MediaImageActivity.class);
             startActivity(intent);
         }
     }
