@@ -27,62 +27,9 @@ public class DirectDrawer {
                     "\n" +
                     "varying highp vec2 vTexCoord;\n" +
                     "uniform samplerExternalOES sTexture;\n" +
-                    "\n" +
-                    "\n" +
-                    "vec3 rgb2hsv(vec3 c)\n" +
-                    "{\n" +
-                    "    vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n" +
-                    "    vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n" +
-                    "    vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n" +
-                    "    \n" +
-                    "    float d = q.x - min(q.w, q.y);\n" +
-                    "    float e = 1.0e-10;\n" +
-                    "    return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n" +
-                    "}\n" +
-                    "\n" +
-                    "vec3 hsv2rgb(vec3 c)\n" +
-                    "{\n" +
-                    "    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);\n" +
-                    "    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);\n" +
-                    "    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);\n" +
-                    "}\n" +
-                    "\n" +
-                    "float h(float x) {\n" +
-                    "    x = x * 360.;\n" +
-                    "    float r;\n" +
-                    "    if (x < 180.) {\n" +
-                    "        r =  -.0018937600605962723*x*x+.4545024145438461*x+39.54739134551675;\n" +
-                    "    } else {\n" +
-                    "        r =  .2222222222222222*x+160.0;\n" +
-                    "    }\n" +
-                    "    return r / 360.;\n" +
-                    "}\n" +
-                    "\n" +
-                    "float sc(float x) {\n" +
-                    "    float xx = 2. * (x - .5);\n" +
-                    "    float r = pow(abs(xx),.56);\n" +
-                    "    //  r = 1.;\n" +
-                    "    return r;\n" +
-                    "}\n" +
-                    "\n" +
-                    "float vc(float x) {\n" +
-                    "    float xx = 2. * (x - .5);\n" +
-                    "    float r = 1. - xx * xx * xx * xx;\n" +
-                    "    return r;\n" +
-                    "}\n" +
-                    "\n" +
-                    "\n" +
                     "void main()\n" +
                     "{\n" +
                     "    mediump vec3 _gb = texture2D(sTexture, vTexCoord).rgb;\n" +
-                    "    _gb.x = .0;\n" +
-                    "    _gb = rgb2hsv(_gb);\n" +
-                    "    \n" +
-                    "    float x = _gb.x;\n" +
-                    "    _gb.x = h(x);\n" +
-                    "    _gb.y = sc(x) * _gb.y;\n" +
-                    "    _gb.z = _gb.z;\n" +
-                    "    _gb = hsv2rgb(_gb);\n" +
                     "    gl_FragColor = vec4(_gb, 1);\n" +
                     "}";
 

@@ -33,7 +33,7 @@ import android.view.Surface;
  * <p>
  * The EGLContext must only be attached to one thread at a time.  This class is not thread-safe.
  */
-@TargetApi(17)
+@TargetApi(18)
 public final class EglCore {
     private static final String TAG = "EglCore";
 
@@ -95,7 +95,7 @@ public final class EglCore {
 
         // Try to get a GLES3 context, if requested.
         if ((flags & FLAG_TRY_GLES3) != 0) {
-            //Log.d(TAG, "Trying GLES 3");
+            Log.d(TAG, "Trying GLES 3");
             EGLConfig config = getConfig(flags, 3);
             if (config != null) {
                 int[] attrib3_list = {
@@ -113,7 +113,7 @@ public final class EglCore {
             }
         }
         if (mEGLContext == EGL14.EGL_NO_CONTEXT) {  // GLES 2 only, or GLES 3 attempt failed
-            //Log.d(TAG, "Trying GLES 2");
+            Log.d(TAG, "Trying GLES 2");
             EGLConfig config = getConfig(flags, 2);
             if (config == null) {
                 throw new RuntimeException("Unable to find a suitable EGLConfig");
@@ -131,8 +131,7 @@ public final class EglCore {
 
         // Confirm with query.
         int[] values = new int[1];
-        EGL14.eglQueryContext(mEGLDisplay, mEGLContext, EGL14.EGL_CONTEXT_CLIENT_VERSION, values,
-                0);
+        EGL14.eglQueryContext(mEGLDisplay, mEGLContext, EGL14.EGL_CONTEXT_CLIENT_VERSION, values, 0);
         Log.d(TAG, "EGLContext created, client version " + values[0]);
     }
 

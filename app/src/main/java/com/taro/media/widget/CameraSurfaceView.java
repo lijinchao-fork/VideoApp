@@ -1,5 +1,6 @@
 package com.taro.media.widget;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -15,7 +16,7 @@ import com.taro.media.camera.CameraRecordRenderer;
 import com.taro.media.camera.CommonHandlerListener;
 import com.taro.media.filter.FilterManager;
 
-
+@TargetApi(11)
 public class CameraSurfaceView extends AutoFitGLSurfaceView implements CommonHandlerListener, SurfaceTexture.OnFrameAvailableListener {
 
     private CameraHandler mBackgroundHandler;
