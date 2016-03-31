@@ -3,6 +3,7 @@ package com.taro.videoapp.shadercamera.camera;
 import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -17,8 +18,11 @@ import com.taro.videoapp.shadercamera.util.CamParaUtil;
 import com.taro.videoapp.shadercamera.util.FileUtil;
 import com.taro.videoapp.shadercamera.util.ImageUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
+
+import jp.co.cyberagent.android.gpuimage.GPUImage;
 
 @TargetApi(11)
 public class CameraInterface {
@@ -43,6 +47,10 @@ public class CameraInterface {
 
     public float getRatio(){
         return (float) ratio;
+    }
+
+    public boolean getIsFrontCamera(){
+        return isFrontCamera;
     }
 
     public void changeCamera(){
@@ -78,6 +86,11 @@ public class CameraInterface {
             }
         }
         Log.i(TAG, "Camera open over....");
+    }
+
+    public void doStartPreview(){
+        mCamera.startPreview();
+        isPreviewing = true;
     }
 
 	/**
@@ -139,7 +152,7 @@ public class CameraInterface {
 	/**
 	 *
 	 */
-	public void doTakePicture(){
+	public void doTakePicture(PictureCallback mJpegPictureCallback){
 		if(isPreviewing && (mCamera != null)){
 			mCamera.takePicture(mShutterCallback, null, mJpegPictureCallback);
 		}
@@ -209,25 +222,6 @@ public class CameraInterface {
 		public void onPictureTaken(byte[] data, Camera camera) {
 			Log.i(TAG, "myRawCallback:onPictureTaken...");
 
-		}
-	};
-	PictureCallback mJpegPictureCallback = new PictureCallback()
-	{
-		public void onPictureTaken(byte[] data, Camera camera) {
-			Log.i(TAG, "myJpegCallback:onPictureTaken...");
-			Bitmap b = null;
-			if(null != data){
-				b = BitmapFactory.decodeByteArray(data, 0, data.length);
-				mCamera.stopPreview();
-				isPreviewing = false;
-			}
-			if(null != b)
-			{
-				Bitmap rotaBitmap = ImageUtil.getRotateBitmap(b, 90.0f);
-				FileUtil.saveBitmap(rotaBitmap);
-			}
-			mCamera.startPreview();
-			isPreviewing = true;
 		}
 	};
 

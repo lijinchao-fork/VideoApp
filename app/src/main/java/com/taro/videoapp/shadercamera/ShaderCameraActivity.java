@@ -53,7 +53,7 @@ public class ShaderCameraActivity extends AppCompatActivity {
         public void onClick(View v) {
             switch(v.getId()){
                 case R.id.btn_shutter:
-                    CameraInterface.getInstance().doTakePicture();
+                    glSurfaceView.doTakePicture();
                     break;
                 case R.id.btn_change:
                     glSurfaceView.changeCamera();
