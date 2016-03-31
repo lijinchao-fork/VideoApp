@@ -10,6 +10,7 @@ import com.taro.videoapp.mediaimage.MediaImageActivity;
 import com.taro.videoapp.record.MediaCodecActivity;
 import com.taro.videoapp.shadercamera.ShaderCameraActivity;
 import com.taro.videoapp.shaderimage.ShaderImageActivity;
+import com.taro.videoapp.takepicture.TakePictureActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -24,6 +25,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.gpu_camera).setOnClickListener(this);
         findViewById(R.id.record_media).setOnClickListener(this);
         findViewById(R.id.media_image).setOnClickListener(this);
+        findViewById(R.id.take_picture).setOnClickListener(this);
+
     }
 
 
@@ -52,6 +55,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if(v.getId() == R.id.media_image){
             Intent intent = new Intent(this, MediaImageActivity.class);
+            startActivity(intent);
+        }
+
+        if(v.getId() == R.id.take_picture){
+            Intent intent = new Intent(this, TakePictureActivity.class);
             startActivity(intent);
         }
     }

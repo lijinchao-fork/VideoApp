@@ -1,5 +1,6 @@
 package com.taro.videoapp.shadercamera.camera.preview;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
@@ -14,6 +15,7 @@ import com.taro.videoapp.shadercamera.camera.CameraInterface;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+@TargetApi(11)
 public class CameraGLSurfaceView extends GLSurfaceView implements Renderer, SurfaceTexture.OnFrameAvailableListener {
 	private static final String TAG = "yanzi";
 	Context mContext;
@@ -36,24 +38,21 @@ public class CameraGLSurfaceView extends GLSurfaceView implements Renderer, Surf
 		mSurface = new SurfaceTexture(mTextureID);
 		mSurface.setOnFrameAvailableListener(this);
 		mDirectDrawer = new DirectDrawer(mTextureID);
-		CameraInterface.getInstance().doOpenCamera(null);
+		CameraInterface.getInstance().doOpenCamera();
 
 	}
+
 	@Override
 	public void onSurfaceChanged(GL10 gl, int width, int height) {
-		// TODO Auto-generated method stub
-		Log.i(TAG, "onSurfaceChanged... width " + width + " height " + height);
-		GLES20.glViewport(0, 0, width, height);
-		if(!CameraInterface.getInstance().isPreviewing()){
-			CameraInterface.getInstance().doStartPreview(mSurface, 1.33f);
-		}
-	
-
+        Log.i(TAG, "onSurfaceChanged... width " + width + " height " + height);
+        GLES20.glViewport(0, 0, width, height);
+        CameraInterface.getInstance().doStartPreview(mSurface, 1.33f);
+        mDirectDrawer.initBuffer(CameraInterface.getInstance().getRatio());
 	}
+
 	@Override
 	public void onDrawFrame(GL10 gl) {
 		// TODO Auto-generated method stub
-		Log.i(TAG, "onDrawFrame...");
 		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		mSurface.updateTexImage();
@@ -66,6 +65,7 @@ public class CameraGLSurfaceView extends GLSurfaceView implements Renderer, Surf
 	public void onPause() {
 		// TODO Auto-generated method stub
 		super.onPause();
+        Log.d(TAG, "onPause");
 		CameraInterface.getInstance().doStopCamera();
 	}
 
@@ -82,14 +82,19 @@ public class CameraGLSurfaceView extends GLSurfaceView implements Renderer, Surf
 
 		return texture[0];
 	}
+
 	public SurfaceTexture _getSurfaceTexture(){
 		return mSurface;
 	}
 	@Override
 	public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-		// TODO Auto-generated method stub
-		Log.i(TAG, "onFrameAvailable...");
 		this.requestRender();
 	}
 
+    public void changeCamera(){
+        CameraInterface.getInstance().changeCamera();
+        CameraInterface.getInstance().doStartPreview(mSurface, 1.33f);
+        mDirectDrawer.changeUpDown();
+        mDirectDrawer.initBuffer(CameraInterface.getInstance().getRatio());
+    }
 }

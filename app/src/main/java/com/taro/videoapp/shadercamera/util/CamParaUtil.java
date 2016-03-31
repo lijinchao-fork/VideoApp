@@ -37,7 +37,7 @@ public class CamParaUtil {
 			i++;
 		}
 		if(i == list.size()){
-			i = 0;//���û�ҵ�����ѡ��С��size
+			i = 0;//
 		}
 		return list.get(i);
 	}
@@ -53,7 +53,7 @@ public class CamParaUtil {
 			i++;
 		}
 		if(i == list.size()){
-			i = 0;//���û�ҵ�����ѡ��С��size
+			i = 0;
 		}
 		return list.get(i);
 	}
@@ -85,7 +85,7 @@ public class CamParaUtil {
 
 	}
 
-	/**��ӡ֧�ֵ�previewSizes
+	/**
 	 * @param params
 	 */
 	public  void printSupportPreviewSize(Camera.Parameters params){
@@ -97,7 +97,7 @@ public class CamParaUtil {
 	
 	}
 
-	/**��ӡ֧�ֵ�pictureSizes
+	/**
 	 * @param params
 	 */
 	public  void printSupportPictureSize(Camera.Parameters params){
@@ -108,7 +108,7 @@ public class CamParaUtil {
 					+" height = " + size.height);
 		}
 	}
-	/**��ӡ֧�ֵľ۽�ģʽ
+	/**
 	 * @param params
 	 */
 	public void printSupportFocusMode(Camera.Parameters params){

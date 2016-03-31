@@ -47,4 +47,12 @@
         android:layout_height="wrap_content"
         android:text="media image" />
 
+    <TextView
+        android:layout_marginTop="40dp"
+        android:layout_below="@+id/media_image"
+        android:id="@+id/take_picture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="take_picture" />
+
 </RelativeLayout>

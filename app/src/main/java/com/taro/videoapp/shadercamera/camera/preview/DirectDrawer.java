@@ -33,7 +33,7 @@ public class DirectDrawer {
                     "    gl_FragColor = vec4(_gb, 1);\n" +
                     "}";
 
-    private FloatBuffer vertexBuffer, textureVerticesBuffer;
+    private FloatBuffer upDownvertexBuffer, downUpvertexBuffer, textureVerticesBuffer;
     private ShortBuffer drawListBuffer;
     private final int mProgram;
     private int mPositionHandle;
@@ -46,31 +46,64 @@ public class DirectDrawer {
 
     private final int vertexStride = COORDS_PER_VERTEX * 4; // 4 bytes per vertex
 
-    static float squareCoords[] = {
-       -1.0f,  1.0f,
-       -1.0f, -1.0f,
-        1.0f, -1.0f,
-        1.0f,  1.0f,
-    };
 
-    static float textureVertices[] = {
-        0.0f, 1.0f,
-        1.0f, 1.0f,
-        1.0f, 0.0f,
-        0.0f, 0.0f,
-    };
+
 
     private int texture;
+    private boolean isUpDown = true;
+
+    public void changeUpDown(){
+        isUpDown = !isUpDown;
+    }
 
     public DirectDrawer(int texture)
     {
         this.texture = texture;
+
+        initBuffer(1.33f);
+
+        int vertexShader    = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
+        int fragmentShader  = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
+
+        mProgram = GLES20.glCreateProgram();             // create empty OpenGL ES Program
+        GLES20.glAttachShader(mProgram, vertexShader);   // add the vertex shader to program
+        GLES20.glAttachShader(mProgram, fragmentShader); // add the fragment shader to program
+        GLES20.glLinkProgram(mProgram);                  // creates OpenGL ES program executables
+    }
+
+    public void initBuffer(float ratio){
+        float upDownsquareCoords[] = {
+                -1.0f,  1.0f * ratio,
+                -1.0f, -1.0f * ratio,
+                1.0f, -1.0f * ratio,
+                1.0f,  1.0f * ratio,
+        };
+
+        float downUpsquareCoords[] = {
+                -1.0f,  -1.0f * ratio,
+                -1.0f, 1.0f * ratio,
+                1.0f, 1.0f * ratio,
+                1.0f,  -1.0f * ratio,
+        };
+
+        float textureVertices[] = {
+                0.0f, 1.0f,
+                1.0f, 1.0f,
+                1.0f, 0.0f,
+                0.0f, 0.0f,
+        };
         // initialize vertex byte buffer for shape coordinates
-        ByteBuffer bb = ByteBuffer.allocateDirect(squareCoords.length * 4);
+        ByteBuffer bb = ByteBuffer.allocateDirect(upDownsquareCoords.length * 4);
         bb.order(ByteOrder.nativeOrder());
-        vertexBuffer = bb.asFloatBuffer();
-        vertexBuffer.put(squareCoords);
-        vertexBuffer.position(0);
+        upDownvertexBuffer = bb.asFloatBuffer();
+        upDownvertexBuffer.put(upDownsquareCoords);
+        upDownvertexBuffer.position(0);
+
+        bb = ByteBuffer.allocateDirect(downUpsquareCoords.length * 4);
+        bb.order(ByteOrder.nativeOrder());
+        downUpvertexBuffer = bb.asFloatBuffer();
+        downUpvertexBuffer.put(downUpsquareCoords);
+        downUpvertexBuffer.position(0);
 
         // initialize byte buffer for the draw list
         ByteBuffer dlb = ByteBuffer.allocateDirect(drawOrder.length * 2);
@@ -84,14 +117,6 @@ public class DirectDrawer {
         textureVerticesBuffer = bb2.asFloatBuffer();
         textureVerticesBuffer.put(textureVertices);
         textureVerticesBuffer.position(0);
-
-        int vertexShader    = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
-        int fragmentShader  = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
-
-        mProgram = GLES20.glCreateProgram();             // create empty OpenGL ES Program
-        GLES20.glAttachShader(mProgram, vertexShader);   // add the vertex shader to program
-        GLES20.glAttachShader(mProgram, fragmentShader); // add the fragment shader to program
-        GLES20.glLinkProgram(mProgram);                  // creates OpenGL ES program executables
     }
 
     public void draw(float[] mtx)
@@ -108,7 +133,12 @@ public class DirectDrawer {
         checkGlError("glEnableVertexAttribArray vPosition");
 
         // Prepare the <insert shape here> coordinate data
-        GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, vertexStride, vertexBuffer);
+        if(isUpDown){
+            GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, vertexStride, upDownvertexBuffer);
+        }else{
+            GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, vertexStride, downUpvertexBuffer);
+        }
+
         checkGlError("glVertexAttribPointer vPosition");
 
         mTextureCoordHandle = GLES20.glGetAttribLocation(mProgram, "inputTextureCoordinate");

@@ -1,5 +1,6 @@
 package com.taro.videoapp.shadercamera.camera;
 
+import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
@@ -8,6 +9,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
 import android.hardware.Camera.Size;
+import android.os.Build;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
@@ -18,19 +20,18 @@ import com.taro.videoapp.shadercamera.util.ImageUtil;
 import java.io.IOException;
 import java.util.List;
 
+@TargetApi(11)
 public class CameraInterface {
 	private static final String TAG = "yanzi";
 	private Camera mCamera;
 	private Camera.Parameters mParams;
 	private boolean isPreviewing = false;
-	private float mPreviwRate = -1f;
 	private static CameraInterface mCameraInterface;
+    private boolean isFrontCamera;
+    private double ratio;
 
-	public interface CamOpenOverCallback{
-		public void cameraHasOpened();
-	}
 
-	private CameraInterface(){
+    private CameraInterface(){
 
 	}
 	public static synchronized CameraInterface getInstance(){
@@ -39,25 +40,47 @@ public class CameraInterface {
 		}
 		return mCameraInterface;
 	}
-	/**��Camera
-	 * @param callback
-	 */
-	public void doOpenCamera(CamOpenOverCallback callback){
-		Log.i(TAG, "Camera open....");
-		if(mCamera == null){
-			mCamera = Camera.open(0);
-			Log.i(TAG, "Camera open over....");
-			if(callback != null){
-				callback.cameraHasOpened();
-			}
-		}else{
-			Log.i(TAG, "Camera open �쳣!!!");
-			doStopCamera();
-		}
-			
-	
-	}
-	/**ʹ��Surfaceview����Ԥ��
+
+    public float getRatio(){
+        return (float) ratio;
+    }
+
+    public void changeCamera(){
+        isFrontCamera = !isFrontCamera;
+        doOpenCamera();
+    }
+
+    public void doOpenCamera(){
+        if(mCamera != null){
+            doStopCamera();
+        }
+        if(isFrontCamera){
+            int numberOfCameras = Camera.getNumberOfCameras();
+            Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+            for (int i = 0; i < numberOfCameras; i++) {
+                Camera.getCameraInfo(i, cameraInfo);
+                Log.d(TAG, "facing " + cameraInfo.facing);
+                if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    mCamera = Camera.open(i);
+                    break;
+                }
+            }
+        }else{
+            int numberOfCameras = Camera.getNumberOfCameras();
+            Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+            for (int i = 0; i < numberOfCameras; i++) {
+                Camera.getCameraInfo(i, cameraInfo);
+                Log.d(TAG, "facing " + cameraInfo.facing);
+                if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                    mCamera = Camera.open(i);
+                    break;
+                }
+            }
+        }
+        Log.i(TAG, "Camera open over....");
+    }
+
+	/**
 	 * @param holder
 	 * @param previewRate
 	 */
@@ -87,7 +110,6 @@ public class CameraInterface {
 		Log.i(TAG, "doStartPreview...");
 		if(isPreviewing){
 			mCamera.stopPreview();
-			return;
 		}
 		if(mCamera != null){
 			try {
@@ -102,21 +124,20 @@ public class CameraInterface {
 	}
 
 	/**
-	 * ֹͣԤ�����ͷ�Camera
+	 *
 	 */
 	public void doStopCamera(){
 		if(null != mCamera)
 		{
 			mCamera.setPreviewCallback(null);
 			mCamera.stopPreview(); 
-			isPreviewing = false; 
-			mPreviwRate = -1f;
+			isPreviewing = false;
 			mCamera.release();
 			mCamera = null;     
 		}
 	}
 	/**
-	 * ����
+	 *
 	 */
 	public void doTakePicture(){
 		if(isPreviewing && (mCamera != null)){
@@ -127,54 +148,57 @@ public class CameraInterface {
 		return isPreviewing;
 	}
 
-
+    //实现自动对焦
+    public void autoFocus() {
+        Log.d(TAG, "autofocus");
+        if (mCamera == null) {
+            return;
+        }
+        mCamera.autoFocus(new Camera.AutoFocusCallback() {
+            @Override
+            public void onAutoFocus(boolean success, Camera camera) {
+            }
+        });
+    }
 
 	private void initCamera(float previewRate){
 		if(mCamera != null){
 
 			mParams = mCamera.getParameters();
-			mParams.setPictureFormat(PixelFormat.JPEG);//�������պ�洢��ͼƬ��ʽ
-//			CamParaUtil.getInstance().printSupportPictureSize(mParams);
-//			CamParaUtil.getInstance().printSupportPreviewSize(mParams);
-			//����PreviewSize��PictureSize
-			Size pictureSize = CamParaUtil.getInstance().getPropPictureSize(
-					mParams.getSupportedPictureSizes(),previewRate, 800);
+			mParams.setPictureFormat(PixelFormat.JPEG);
+			CamParaUtil.getInstance().printSupportPictureSize(mParams);
+			CamParaUtil.getInstance().printSupportPreviewSize(mParams);
+
+			Size pictureSize = CamParaUtil.getInstance().getPropPictureSize(mParams.getSupportedPictureSizes(),previewRate, 800);
 			mParams.setPictureSize(pictureSize.width, pictureSize.height);
-			Size previewSize = CamParaUtil.getInstance().getPropPreviewSize(
-					mParams.getSupportedPreviewSizes(), previewRate, 800);
+            ratio = pictureSize.width * 1.0 / pictureSize.height;
+			Size previewSize = CamParaUtil.getInstance().getPropPreviewSize(mParams.getSupportedPreviewSizes(), previewRate, 800);
 			mParams.setPreviewSize(previewSize.width, previewSize.height);
 
 			mCamera.setDisplayOrientation(90);
 
-//			CamParaUtil.getInstance().printSupportFocusMode(mParams);
+			CamParaUtil.getInstance().printSupportFocusMode(mParams);
 			List<String> focusModes = mParams.getSupportedFocusModes();
-			if(focusModes.contains("continuous-video")){
-				mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+			if(focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)){
+                Log.d(TAG, "mCamera FOCUS_MODE_CONTINUOUS_PICTURE");
+				mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
 			}
 			mCamera.setParameters(mParams);	
-			mCamera.startPreview();//����Ԥ��
-
-
-
+			mCamera.startPreview();
+            mCamera.cancelAutoFocus();// 2如果要实现连续的自动对焦，这一句必须加上
 			isPreviewing = true;
-			mPreviwRate = previewRate;
-
-			mParams = mCamera.getParameters(); //����getһ��
-			Log.i(TAG, "��������:PreviewSize--With = " + mParams.getPreviewSize().width
-					+ "Height = " + mParams.getPreviewSize().height);
-			Log.i(TAG, "��������:PictureSize--With = " + mParams.getPictureSize().width
-					+ "Height = " + mParams.getPictureSize().height);
+			mParams = mCamera.getParameters();
+			Log.i(TAG, "PreviewSize--With = " + mParams.getPreviewSize().width + "Height = " + mParams.getPreviewSize().height);
+			Log.i(TAG, "PictureSize--With = " + mParams.getPictureSize().width + "Height = " + mParams.getPictureSize().height);
 		}
 	}
 
 
 
-	/*Ϊ��ʵ�����յĿ������������ձ�����Ƭ��Ҫ��������ص�����*/
-	ShutterCallback mShutterCallback = new ShutterCallback() 
-	//���Ű��µĻص������������ǿ����������Ʋ��š����ꡱ��֮��Ĳ�����Ĭ�ϵľ������ꡣ
+
+	ShutterCallback mShutterCallback = new ShutterCallback()
 	{
 		public void onShutter() {
-			// TODO Auto-generated method stub
 			Log.i(TAG, "myShutterCallback:onShutter...");
 		}
 	};
@@ -183,32 +207,25 @@ public class CameraInterface {
 	{
 
 		public void onPictureTaken(byte[] data, Camera camera) {
-			// TODO Auto-generated method stub
 			Log.i(TAG, "myRawCallback:onPictureTaken...");
 
 		}
 	};
-	PictureCallback mJpegPictureCallback = new PictureCallback() 
-	//��jpegͼ����ݵĻص�,����Ҫ��һ���ص�
+	PictureCallback mJpegPictureCallback = new PictureCallback()
 	{
 		public void onPictureTaken(byte[] data, Camera camera) {
-			// TODO Auto-generated method stub
 			Log.i(TAG, "myJpegCallback:onPictureTaken...");
 			Bitmap b = null;
 			if(null != data){
-				b = BitmapFactory.decodeByteArray(data, 0, data.length);//data���ֽ���ݣ����������λͼ
+				b = BitmapFactory.decodeByteArray(data, 0, data.length);
 				mCamera.stopPreview();
 				isPreviewing = false;
 			}
-			//����ͼƬ��sdcard
 			if(null != b)
 			{
-				//����FOCUS_MODE_CONTINUOUS_VIDEO)֮��myParam.set("rotation", 90)ʧЧ��
-				//ͼƬ��Ȼ������ת�ˣ�������Ҫ��ת��
 				Bitmap rotaBitmap = ImageUtil.getRotateBitmap(b, 90.0f);
 				FileUtil.saveBitmap(rotaBitmap);
 			}
-			//�ٴν���Ԥ��
 			mCamera.startPreview();
 			isPreviewing = true;
 		}
